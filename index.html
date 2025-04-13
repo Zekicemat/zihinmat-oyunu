@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Zihinmat Çok Oyunculu - Zamanlı Tur</title>
   <style>
-    /* Stil ayarları (hiçbir değişiklik yapmadım) */
     body {
       font-family: Arial, sans-serif;
       background-color: #f4f4f4;
@@ -18,7 +17,6 @@
       padding: 10px;
       box-sizing: border-box;
     }
-
     header {
       display: flex;
       justify-content: center;
@@ -26,19 +24,16 @@
       padding: 10px;
       width: 100%;
     }
-
     h1, h2, h3 {
       text-align: center;
       color: #333;
     }
-
     #logo {
       max-width: 100%;
       height: auto;
       display: block;
       margin: 10px auto 20px auto;
     }
-
     form {
       background: #fff;
       padding: 20px;
@@ -49,14 +44,12 @@
       margin-bottom: 20px;
       box-sizing: border-box;
     }
-
     label {
       display: block;
       margin-bottom: 10px;
       font-weight: bold;
     }
-
-    input[type="number"] {
+input[type="number"] {
       width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
@@ -65,7 +58,6 @@
       font-size: 16px;
       box-sizing: border-box;
     }
-
     button {
       background-color: #28a745;
       color: white;
@@ -77,11 +69,9 @@
       transition: background-color 0.3s;
       width: 48%;
     }
-
     button:hover {
       background-color: #218838;
     }
-
     #output {
       background-color: #e9ecef;
       padding: 15px;
@@ -92,26 +82,22 @@
       margin-bottom: 20px;
       overflow-wrap: break-word;
     }
-
     #valueDisplay {
       font-weight: bold;
       margin-top: 10px;
       text-align: center;
     }
-
     #currentPlayer {
       font-size: 18px;
       margin-bottom: 10px;
       font-weight: bold;
       color: #007bff;
     }
-
     #timerDisplay {
       font-size: 16px;
       margin-bottom: 10px;
       color: #d63333;
     }
-
     #playerSelect {
       background-color: #fff;
       padding: 15px;
@@ -121,7 +107,30 @@
       max-width: 400px;
       margin-bottom: 20px;
     }
-
+    .correct-number {
+      background-color: #d4edda;
+      border: 1px solid #28a745;
+      padding: 5px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 2px;
+    }
+    .wrong-number {
+      background-color: #f8d7da;
+      border: 1px solid #dc3545;
+      padding: 5px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 2px;
+    }
+    .last-number {
+      background-color: #cce5ff;
+      border: 1px solid #007bff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      margin: 2px;
+    }
     @media (max-width: 600px) {
       h1 {
         font-size: 20px;
@@ -142,11 +151,10 @@
   </header>
 
   <h1>Zihinmat'a Hoşgeldiniz</h1>
-<p style="text-align:center; max-width: 500px; margin-top: 5px;">
-  Girilen son sayının çarpanını veya katını bul. 3 hata 1 Pas hakkın var. Hamle bırakmayan oyunu kazanır.
-</p>
-
-  <div id="playerSelect">
+  <p style="text-align:center; font-size:16px; color:#555;">
+    Girilen son sayının çarpanını (bölenini) veya katını bul. 3 Hata 1 Pas hakkın var. Hamle bırakmayan oyunu kazanır.
+  </p>
+ <div id="playerSelect">
     <h2>Kaç oyunculu oynanacak?</h2>
     <form id="playerForm">
       <label for="playersCountInput">Oyuncu Sayısı (En az 1):</label>
@@ -156,8 +164,9 @@
   </div>
 
   <div id="gameArea" style="display:none;">
-    <div id="output" aria-live="polite">Oyun başladı! İlk sayı: <span id="firstNumber"></span></div>
+    <div id="output" aria-live="polite">Oyun başladı! İlk sayı: <span id="firstNumber" class="correct-number"></span></div>
     <div id="currentPlayer"></div>
+    <div id="currentNumberBox" class="last-number" style="margin-bottom:10px;"></div>
     <div id="timerDisplay"></div>
     <h2>Lütfen 2 ile 101 arasında bir sayı giriniz.</h2>
     <form id="myForm">
@@ -169,181 +178,202 @@
     <h3>Sonuç:</h3>
     <div id="valueDisplay"></div>
   </div>
+<script>
+  let players = [];
+  let currentPlayerIndex = 0;
+  let totalPlayers = 0;
 
-  <script>
-    let players = [];
-    let currentPlayerIndex = 0;
-    let totalPlayers = 0;
+  const TURN_TIME = 20;
+  let remainingTime = TURN_TIME;
+  let turnTimerInterval;
 
-    const TURN_TIME = 10;
-    let remainingTime = TURN_TIME;
-    let turnTimerInterval;
-    let turnTimeout;
+  let previousNumbers = [];
+  let firstNumber = Math.floor(Math.random() * 50) + 2;
+  previousNumbers.push(firstNumber);
 
-    let previousNumbers = [];
-    let firstNumber = Math.floor(Math.random() * 50) + 2;
-    previousNumbers.push(firstNumber);
+  const playerForm = document.getElementById('playerForm');
+  const playersCountInput = document.getElementById('playersCountInput');
+  const playerSelectDiv = document.getElementById('playerSelect');
+  const gameArea = document.getElementById('gameArea');
+  const firstNumberSpan = document.getElementById('firstNumber');
+  const currentPlayerDiv = document.getElementById('currentPlayer');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const outputDiv = document.getElementById('output');
+  const valueDisplay = document.getElementById('valueDisplay');
 
-    const playerForm = document.getElementById('playerForm');
-    const playersCountInput = document.getElementById('playersCountInput');
-    const playerSelectDiv = document.getElementById('playerSelect');
-    const gameArea = document.getElementById('gameArea');
-    const firstNumberSpan = document.getElementById('firstNumber');
-    const currentPlayerDiv = document.getElementById('currentPlayer');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const outputDiv = document.getElementById('output');
-    const valueDisplay = document.getElementById('valueDisplay');
+  firstNumberSpan.textContent = firstNumber;
 
-    firstNumberSpan.textContent = firstNumber;
-
-    playerForm.onsubmit = function(event) {
-      event.preventDefault();
-      totalPlayers = parseInt(playersCountInput.value);
-      if (totalPlayers < 1) {
-        alert("En az 1 oyuncu olmalıdır!");
-        return;
-      }
-      for (let i = 0; i < totalPlayers; i++) {
-        players.push({ hata: 0, pas: 0 });
-      }
-      playerSelectDiv.style.display = 'none';
-      gameArea.style.display = 'block';
-      updateCurrentPlayerDisplay();
-      updateValueDisplay();
-      startTurnTimer();
-    };
-
-    const myForm = document.getElementById('myForm');
-    const numberInput = document.getElementById('numberInput');
-    const passButton = document.getElementById('passButton');
-
-    function updateCurrentPlayerDisplay() {
-      currentPlayerDiv.textContent = `Sıra: Oyuncu ${currentPlayerIndex + 1} / ${totalPlayers}`;
+  playerForm.onsubmit = function(event) {
+    event.preventDefault();
+    totalPlayers = parseInt(playersCountInput.value);
+    if (totalPlayers < 1) {
+      alert("En az 1 oyuncu olmalıdır!");
+      return;
     }
-
-    function updateValueDisplay() {
-      let displayText = "";
-      players.forEach((player, index) => {
-        displayText += `Oyuncu ${index + 1} - Hata Sayısı: ${player.hata}, Pas Sayısı: ${player.pas}<br>`;
-      });
-      valueDisplay.innerHTML = displayText;
+    players = [];
+    for (let i = 0; i < totalPlayers; i++) {
+      players.push({ hata: 0, pas: 0 });
     }
+    playerSelectDiv.style.display = 'none';
+    gameArea.style.display = 'block';
+    document.getElementById('currentNumberBox').textContent = firstNumber;
+    updateCurrentPlayerDisplay();
+    updateValueDisplay();
+    startTurnTimer();
+  };
 
-    function startTurnTimer() {
-      clearTurnTimers();
-      remainingTime = TURN_TIME;
+  const myForm = document.getElementById('myForm');
+  const numberInput = document.getElementById('numberInput');
+  const passButton = document.getElementById('passButton');
+
+  function updateCurrentPlayerDisplay() {
+    currentPlayerDiv.textContent = `Sıra: Oyuncu ${currentPlayerIndex + 1}`;
+  }
+
+  function updateValueDisplay() {
+    let displayText = "";
+    players.forEach((player, index) => {
+      displayText += `Oyuncu ${index + 1} - Hata Sayısı: ${player.hata}, Pas Sayısı: ${player.pas}<br>`;
+    });
+    valueDisplay.innerHTML = displayText;
+  }
+
+  function startTurnTimer() {
+    clearInterval(turnTimerInterval);
+    remainingTime = TURN_TIME;
+    timerDisplay.textContent = `Kalan süre: ${remainingTime} saniye`;
+    turnTimerInterval = setInterval(() => {
+      remainingTime--;
       timerDisplay.textContent = `Kalan süre: ${remainingTime} saniye`;
-      turnTimerInterval = setInterval(() => {
-        remainingTime--;
-        timerDisplay.textContent = `Kalan süre: ${remainingTime} saniye`;
-      }, 1000);
-      turnTimeout = setTimeout(() => {
+      if (remainingTime <= 0) {
+        clearInterval(turnTimerInterval);
         handleTimeOut();
-      }, TURN_TIME * 1000);
-    }
+      }
+    }, 1000);
+  }
 
-    function clearTurnTimers() {
-      clearInterval(turnTimerInterval);
-      clearTimeout(turnTimeout);
+  function handleTimeOut() {
+    const currentPlayer = players[currentPlayerIndex];
+    currentPlayer.hata += 1;
+    outputDiv.innerHTML += `<p>Oyuncu ${currentPlayerIndex + 1}: <span class="wrong-number">Süreniz doldu! Hata sayınız 1 arttı.</span></p>`;
+    updateValueDisplay();
+    if (currentPlayer.hata >= 3) {
+      let aktifOyuncular = players.filter(p => p.hata < 3);
+      if (aktifOyuncular.length === 1) {
+        let kazananIndex = players.findIndex(p => p.hata < 3);
+        return endGame(`Oyuncu ${currentPlayerIndex + 1} elendi. Oyuncu ${kazananIndex + 1} kazandı!`);
+      }
+      outputDiv.innerHTML += `<p style="color:red;">Oyuncu ${currentPlayerIndex + 1} elendi.</p>`;
+      updateValueDisplay();
     }
+    nextPlayer();
+  }
 
-    function handleTimeOut() {
-      const currentPlayer = players[currentPlayerIndex];
+  function endGame(message) {
+    clearInterval(turnTimerInterval);
+    outputDiv.innerHTML += `<p style="color:red;">${message} Oyun Bitti!</p>`;
+    numberInput.disabled = true;
+    passButton.disabled = true;
+    setTimeout(() => {
+      window.location.reload();
+    }, 5000);
+  }
+
+  function nextPlayer() {
+    clearInterval(turnTimerInterval);
+    currentPlayerIndex = (currentPlayerIndex + 1) % totalPlayers;
+    updateCurrentPlayerDisplay();
+    numberInput.value = "";
+    numberInput.focus();
+    startTurnTimer();
+  }
+
+  myForm.onsubmit = function (event) {
+    event.preventDefault();
+    clearInterval(turnTimerInterval);
+    const newNumber = parseFloat(numberInput.value);
+    let resultMessage = "";
+    let newNumbersBolenler = [];
+    const currentPlayer = players[currentPlayerIndex];
+
+    if (newNumber < 2 || newNumber > 101) {
       currentPlayer.hata += 1;
-      outputDiv.innerHTML += `<p>Oyuncu ${currentPlayerIndex + 1}: Süreniz doldu! Hata sayınız 1 arttı.</p>`;
-      updateValueDisplay();
-      if (currentPlayer.hata >= 3) {
-        return endGame(`Oyuncu ${currentPlayerIndex + 1}'in hata sayısı 3'e ulaştı.`);
+      resultMessage = `Hata: ${newNumber} 2 ile 101 arasında bir sayı olmalı! (Hata Sayısı: ${currentPlayer.hata})`;
+    } else if (previousNumbers.includes(newNumber)) {
+      currentPlayer.hata += 1;
+      resultMessage = `Hata: ${newNumber} daha önce girilmiş. (Hata Sayısı: ${currentPlayer.hata})`;
+    } else {
+      for (let i = 2; i <= 101; i++) {
+        if (i !== newNumber && (newNumber % i === 0 || i % newNumber === 0)) {
+          newNumbersBolenler.push(i);
+        }
       }
-      nextPlayer();
-    }
+      const yeniSayilar = newNumbersBolenler.filter(num => !previousNumbers.includes(num));
 
-    function endGame(message) {
-      clearTurnTimers();
-      outputDiv.innerHTML += `<p style="color:red;">${message} Oyun Bitti!</p>`;
-      numberInput.disabled = true;
-      passButton.disabled = true;
-      setTimeout(() => {
-        window.location.reload();
-      }, 5000);
-    }
-
-    function nextPlayer() {
-      clearTurnTimers();
-      currentPlayerIndex = (currentPlayerIndex + 1) % totalPlayers;
-      updateCurrentPlayerDisplay();
-      numberInput.value = "";
-      numberInput.focus();
-      startTurnTimer();
-    }
-
-    myForm.onsubmit = function (event) {
-      event.preventDefault();
-      clearTurnTimers();
-      const newNumber = parseFloat(numberInput.value);
-      let resultMessage = "";
-      let newNumbersBolenler = [];
-      const currentPlayer = players[currentPlayerIndex];
-
-      if (newNumber < 2 || newNumber > 101) {
-        currentPlayer.hata += 1;
-        resultMessage = `Hata: ${newNumber} 2 ile 101 arasında bir sayı olmalı! (Hata Sayısı: ${currentPlayer.hata})`;
-      } else if (previousNumbers.includes(newNumber)) {
-        currentPlayer.hata += 1;
-        resultMessage = `Hata: ${newNumber} daha önce girilmiş. (Hata Sayısı: ${currentPlayer.hata})`;
+      if (yeniSayilar.length === 0) {
+        let kalanOyuncular = players.map((p, i) => i).filter(i => players[i].hata < 3);
+        let kazananIndex = kalanOyuncular.length === 1 ? kalanOyuncular[0] : currentPlayerIndex;
+        resultMessage = 'Oyun kilitlendi. Oyuncu ' + (kazananIndex + 1) + ', hamle bırakmayan kişiydi. Kazandınız!';
+        outputDiv.innerHTML += `<p>Oyuncu ${currentPlayerIndex + 1}: <span class="correct-number">${resultMessage}</span></p>`;
+        return endGame(`Oyuncu ${kazananIndex + 1} kazandı!`);
       } else {
-        for (let i = 2; i <= 101; i++) {
-          if (i !== newNumber && (newNumber % i === 0 || i % newNumber === 0)) {
-            newNumbersBolenler.push(i);
-          }
-        }
-        const yeniSayilar = newNumbersBolenler.filter(num => !previousNumbers.includes(num));
-
-        if (yeniSayilar.length === 0) {
-          resultMessage = `${newNumber}, başka yeni böleni veya katı yok. Tebrikler, Oyuncu ${currentPlayerIndex + 1} kazandı!`;
-          outputDiv.innerHTML += `<p>${resultMessage}</p>`;
-          return endGame(`Oyuncu ${currentPlayerIndex + 1} kazandı!`);
+        const previousNumber = previousNumbers[previousNumbers.length - 1];
+        if (newNumber % previousNumber === 0) {
+          resultMessage = `${newNumber}, ${previousNumber}'in katıdır.`;
+          previousNumbers.push(newNumber);
+          document.getElementById('currentNumberBox').textContent = newNumber;
+          document.getElementById('currentNumberBox').className = 'last-number';
+        } else if (previousNumber % newNumber === 0) {
+          resultMessage = `${newNumber}, ${previousNumber}'in çarpanıdır.`;
+          previousNumbers.push(newNumber);
+          document.getElementById('currentNumberBox').textContent = newNumber;
+          document.getElementById('currentNumberBox').className = 'last-number';
         } else {
-          const previousNumber = previousNumbers[previousNumbers.length - 1];
-          if (newNumber % previousNumber === 0) {
-            resultMessage = `${newNumber}, ${previousNumber}'in katıdır.`;
-            previousNumbers.push(newNumber);
-          } else if (previousNumber % newNumber === 0) {
-            resultMessage = `${newNumber}, ${previousNumber}'in bölenidir.`;
-            previousNumbers.push(newNumber);
-          } else {
-            resultMessage = `${newNumber}, ne ${previousNumber}'in katı ne de bölenidir.`;
-            currentPlayer.hata += 1;
-          }
+          resultMessage = `${newNumber}, ne ${previousNumber}'in katı ne de çarpanıdır.`;
+          currentPlayer.hata += 1;
         }
       }
+    }
 
-      outputDiv.innerHTML += `<p>Oyuncu ${currentPlayerIndex + 1}: ${resultMessage}</p>`;
+    outputDiv.innerHTML += `<p>Oyuncu ${currentPlayerIndex + 1}: <span class="${(resultMessage.includes('Hata') || resultMessage.includes('ne katıdır') || resultMessage.includes('ne çarpanıdır')) ? 'wrong-number' : 'correct-number'}">${resultMessage}</span></p>`;
+    updateValueDisplay();
+    if (currentPlayer.hata >= 3) {
+      let aktifOyuncular = players.filter(p => p.hata < 3);
+      if (aktifOyuncular.length === 1) {
+        let kazananIndex = players.findIndex(p => p.hata < 3);
+        return endGame(`Oyuncu ${currentPlayerIndex + 1} elendi. Oyuncu ${kazananIndex + 1} kazandı!`);
+      }
+      outputDiv.innerHTML += `<p style="color:red;">Oyuncu ${currentPlayerIndex + 1} elendi.</p>`;
       updateValueDisplay();
-      if (currentPlayer.hata >= 3) {
-        return endGame(`Oyuncu ${currentPlayerIndex + 1}'in hata sayısı 3'e ulaştı.`);
-      }
-      nextPlayer();
-    };
+    }
+    nextPlayer();
+  };
 
-    passButton.onclick = function () {
-      clearTurnTimers();
-      const currentPlayer = players[currentPlayerIndex];
-      currentPlayer.pas += 1;
-      const newPassNumber = Math.floor(Math.random() * 50) + 1;
-      previousNumbers.push(newPassNumber);
-      outputDiv.innerHTML += `<p>Oyuncu ${currentPlayerIndex + 1} pas kullandı. Yeni sayı: ${newPassNumber} eklendi.</p>`;
-
-      if (currentPlayer.pas > 3) {
-        currentPlayer.hata += 1;
-        outputDiv.innerHTML += `<p style="color:red;">Oyuncu ${currentPlayerIndex + 1}: Her ek pas için hata sayınız 1 arttı!</p>`;
+  passButton.onclick = function () {
+    clearInterval(turnTimerInterval);
+    const currentPlayer = players[currentPlayerIndex];
+    currentPlayer.pas += 1;
+    const newPassNumber = Math.floor(Math.random() * 100) + 2;
+    previousNumbers.push(newPassNumber);
+    document.getElementById('currentNumberBox').textContent = newPassNumber;
+    document.getElementById('currentNumberBox').className = 'last-number';
+    outputDiv.innerHTML += `<p>Oyuncu ${currentPlayerIndex + 1} pas kullandı. Yeni sayı: ${newPassNumber} eklendi.</p>`;
+    if (currentPlayer.pas > 3) {
+      currentPlayer.hata += 1;
+      outputDiv.innerHTML += `<p style="color:red;">Oyuncu ${currentPlayerIndex + 1}: Her ek pas için hata sayınız 1 arttı!</p>`;
+    }
+    updateValueDisplay();
+    if (currentPlayer.hata >= 3) {
+      let aktifOyuncular = players.filter(p => p.hata < 3);
+      if (aktifOyuncular.length === 1) {
+        let kazananIndex = players.findIndex(p => p.hata < 3);
+        return endGame(`Oyuncu ${currentPlayerIndex + 1} elendi. Oyuncu ${kazananIndex + 1} kazandı!`);
       }
+      outputDiv.innerHTML += `<p style="color:red;">Oyuncu ${currentPlayerIndex + 1} elendi.</p>`;
       updateValueDisplay();
-      if (currentPlayer.hata >= 3) {
-        return endGame(`Oyuncu ${currentPlayerIndex + 1}'in hata sayısı 3'e ulaştı.`);
-      }
-      nextPlayer();
-    };
-  </script>
+    }
+    nextPlayer();
+  };
+</script>
 </body>
 </html>
