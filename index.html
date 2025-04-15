@@ -335,7 +335,7 @@ for (let i = 2; i <= maxLimit; i++) {
       currentPlayer.pas += 1;
       let newPassNumber;
       do {
-        newPassNumber = Math.floor(Math.random() * (maxLimit - 1)) + 2;
+        newPassNumber = Math.floor(Math.random() * 51) + 1;
       } while (previousNumbers.includes(newPassNumber));
       previousNumbers.push(newPassNumber);
       document.getElementById('currentNumberBox').textContent = newPassNumber;
